@@ -8,7 +8,6 @@ export async function getCompletionOfPrompt(
     temperature = 0,
     max_tokens = 150,
     stop = ":=") {
-    debugger
     let response = await openai.createCompletion({
         model: engine,
         prompt,
@@ -16,7 +15,6 @@ export async function getCompletionOfPrompt(
         temperature,
         stop
     })
-    debugger
     return response.data.choices[0].text
 }
 

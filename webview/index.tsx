@@ -9,22 +9,28 @@ import {runExample} from './query_api';
 function Main() {
 
     const [result, setResult] = React.useState(undefined)
-
+    const [openaikey, setOpenaikey] = React.useState(undefined)
 
     React.useEffect(() => {
         window.addEventListener('message', event => {
-            const message = event.data;
-            if (message.command == "key") {
-                runExample(message.key).then(s => setResult(s)).catch(err => setResult(err.message))
-            }
+        const message = event.data;
+        if (message.command == "key") {
+            setOpenaikey(message.key)
+        }
         })
     })
 
+    function onclick () {
+        setResult("asking OpenAI!")
+        runExample(openaikey).then(s => setResult(s)).catch(err => setResult(err.message))
+    }
 
-    return <div className="foo">
-        <h1>Welcome to Lean chat!</h1>
+
+    return <div>
+        <h1 className="foo">Welcome to Lean chat!</h1>
         <p>lorem ipsum dolor sit amet, consectetur adip</p>
-        <p>Result {result ?? "pending"}</p>
+        <button onClick={onclick}>Run!</button>
+        <p>Result: {result ?? "click the button to run!"}</p>
     </div>
 }
 
