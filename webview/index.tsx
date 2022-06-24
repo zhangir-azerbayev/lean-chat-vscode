@@ -3,12 +3,23 @@ import * as ReactDOM from 'react-dom';
 import './index.css'
 import {runExample} from './query_api';
 
+
+
+
 function Main() {
 
     const [result, setResult] = React.useState(undefined)
+
+
     React.useEffect(() => {
-        runExample().then(s => setResult(s)).catch(err => setResult(err.message))
-    }, [])
+        window.addEventListener('message', event => {
+            const message = event.data;
+            if (message.command == "key") {
+                runExample(message.key).then(s => setResult(s)).catch(err => setResult(err.message))
+            }
+        })
+    })
+
 
     return <div className="foo">
         <h1>Welcome to Lean chat!</h1>

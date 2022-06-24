@@ -6,7 +6,6 @@ import { join } from 'path';
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -14,7 +13,11 @@ export async function activate(context: vscode.ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, your extension "lean-chat-vscode" is now active!');
 
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 
+    if (OPENAI_API_KEY === undefined) {
+        vscode.window.showInformationMessage('You need to have an OPENAI_API_KEY environment variable!');
+    }
 
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
@@ -45,12 +48,13 @@ export async function activate(context: vscode.ExtensionContext) {
                 </head>
                 <body>
                     <div id="react_root"></div>
-                    <script>OPENAI_API_KEY = ${OPENAI_API_KEY}</script>
                     <script src="${mediaPath}"></script>
                 </body>
             </html>`
 
         panel.webview.html = webviewContent
+
+        panel.webview.postMessage({command : "key", key : OPENAI_API_KEY})
     }
     ))
 }
