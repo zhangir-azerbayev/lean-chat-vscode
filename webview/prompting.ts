@@ -16,7 +16,7 @@ theorem subset_of_open_subset_is_open (X : Type*) [topological_space X]
   (A : set X) (hA : ∀ x ∈ A, ∃ U : set X, is_open U ∧ x ∈ U ∧ U ⊆ A):
   is_open A :=`;
 
-export function promptOfNlStatement(nl, fewShotPrompt) {
+export function promptOfNlStatement(nl, fewShotPrompt = FEW_SHOT_PROMPT) {
   return fewShotPrompt + "\n\nNatural language version: \"" + nl + "\" Translate the natural language version to a Lean mathlib version:\ntheorem";
 };
 
