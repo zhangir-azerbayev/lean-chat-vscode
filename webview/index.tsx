@@ -6,16 +6,33 @@ import { getCompletionOfPrompt, isSafeOfResponse, runExample } from './query_api
 import './tachyons.css'
 import { MessageBox, MessageList } from './Chat'
 import { Configuration, OpenAIApi } from 'openai';
-import { promptOfNlStatement, promptOfResponse} from './prompting';
+import { promptOfNlStatement, promptOfResponse } from './prompting';
 import { AuthenticationSession } from 'vscode';
-
-// this is injected in extension.ts
-declare const LEAN_CHAT_CONFIG: Config
 
 interface Config {
     apiKey: string;
     chatImage: string;
     session: AuthenticationSession;
+}
+
+// this is injected in extension.ts
+declare const LEAN_CHAT_CONFIG: Config
+
+declare const acquireVsCodeApi;
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const vscode = acquireVsCodeApi();
+
+export function post(message: InsertTextMessage): void { // send a message to the extension
+    vscode.postMessage(message);
+}
+
+
+interface InsertTextMessage {
+    command: 'insert_text';
+    /** If no location is given set to be the cursor position. */
+    loc?: Location;
+    text: string;
+    insert_type: 'absolute' | 'relative';
 }
 
 interface Bubble {
@@ -45,20 +62,20 @@ function Main({ config }: { config: Config }) {
         setPending(true)
         try {
             var prompt;
-            if (bubbles.length!==0) {
+            if (bubbles.length !== 0) {
                 const context = bubbles.map(x => x["plaintext"]).join("")
                 prompt = promptOfResponse(inputText, context)
             } else {
                 prompt = promptOfNlStatement(inputText)
             }
-            const user = LEAN_CHAT_CONFIG.session.account.id; 
+            const user = LEAN_CHAT_CONFIG.session.account.id;
             var response = await getCompletionOfPrompt(openai, prompt, user)
 
             if (isSafeOfResponse(openai, response)) {
-                pushBubble({user: "codex", plaintext: response + ":=", type: 'code'})
+                pushBubble({ user: "codex", plaintext: response + ":=", type: 'code' })
             } else {
                 const message = "Codex generated an unsafe output. Hit clear and try again"
-                pushBubble({user: "codex", plaintext: response, type: 'code'})
+                pushBubble({ user: "codex", plaintext: response, type: 'code' })
             }
         }
         catch (e) {
@@ -83,13 +100,17 @@ function Main({ config }: { config: Config }) {
             <input type="text" value={inputText} onChange={e => setInputText(e.target.value)} />
             <input type="submit" value="Send" disabled={pending} />
         </form>
-        <button onClick={() => setInputText(DEMO)}>Demo</button>
+        <button title="Try it out with demo text" onClick={() => setInputText(DEMO)}>Demo</button>
     </div>
 }
 
 function ShowCodeBubble(props: Bubble) {
+    let text = `theorem ${props.plaintext}`
     return <div>
-        <code className="font-code" style={{ whiteSpace: 'break-spaces' }}>theorem{props.plaintext}</code>
+        <code className="font-code" style={{ whiteSpace: 'break-spaces' }}>{text}</code>
+        <div>
+            <button title="Paste to document"  onClick={() => post({ command: 'insert_text', text, insert_type: 'relative' })}>📋</button>
+        </div>
     </div>
 }
 
