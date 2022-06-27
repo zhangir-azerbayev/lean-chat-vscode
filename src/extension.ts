@@ -22,10 +22,12 @@ export async function activate(context: vscode.ExtensionContext) {
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
     // The commandId parameter must match the command field in package.json
-    context.subscriptions.push(vscode.commands.registerCommand('lean-chat-vscode.open', function () {
+    context.subscriptions.push(vscode.commands.registerCommand('lean-chat-vscode.open', async function () {
         // The code you place here will be executed every time your command is executed
 
-        // Display a message box to the user
+        // [todo] add a modal dialogue here that tells the user that OpenAI needs us to
+        // sign you in.
+        const session = await authenticateUser()
 
         // [todo] don't make a new panel if one already exists.
         const panel = vscode.window.createWebviewPanel(
@@ -47,7 +49,8 @@ export async function activate(context: vscode.ExtensionContext) {
                     <script type="text/javascript">
                         const LEAN_CHAT_CONFIG = {
                             apiKey: ${JSON.stringify(OPENAI_API_KEY)},
-                            chatImage: ${JSON.stringify(codexImgPath.toString())}
+                            chatImage: ${JSON.stringify(codexImgPath.toString())},
+                            session: ${JSON.stringify(session)},
                         };
                     </script>
                     <style>${mkStylesheet()}</style>
@@ -60,7 +63,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
         panel.webview.html = webviewContent
 
-        // panel.webview.postMessage({command : "key", key : OPENAI_API_KEY})
     }
     ))
 }
@@ -68,7 +70,12 @@ export async function activate(context: vscode.ExtensionContext) {
 // this method is called when your extension is deactivated
 export async function deactivate() { }
 
-
+async function authenticateUser() {
+    const session = await vscode.authentication.getSession('github',
+        ["user:email"],
+        { createIfNone: true })
+    return session
+}
 
 function mkStylesheet() {
     const fontFamily =

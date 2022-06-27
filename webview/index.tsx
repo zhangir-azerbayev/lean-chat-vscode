@@ -7,10 +7,15 @@ import './tachyons.css'
 import { MessageBox, MessageList } from './Chat'
 import { Configuration, OpenAIApi } from 'openai';
 import { promptOfNlStatement, promptOfResponse} from './prompting';
+import { AuthenticationSession } from 'vscode';
+
+// this is injected in extension.ts
+declare const LEAN_CHAT_CONFIG: Config
 
 interface Config {
     apiKey: string;
     chatImage: string;
+    session: AuthenticationSession;
 }
 
 interface Bubble {
@@ -39,13 +44,13 @@ function Main({ config }: { config: Config }) {
         setError(undefined)
         setPending(true)
         try {
-            var prompt; 
-            var response; 
+            var prompt;
+            var response;
             if (bubbles.length!==0) {
                 const context = bubbles.map(x => x["plaintext"]).join("")
                 prompt = promptOfResponse(inputText, context)
                 response = await getCompletionOfPrompt(openai, prompt)
-                
+
             } else {
                 prompt = promptOfNlStatement(inputText)
                 response = await getCompletionOfPrompt(openai, prompt)
@@ -90,6 +95,5 @@ function ShowCodeBubble(props: Bubble) {
     </div>
 }
 
-declare const LEAN_CHAT_CONFIG: Config
 const domContainer = document.querySelector('#react_root');
 ReactDOM.render(<Main config={LEAN_CHAT_CONFIG} />, domContainer);
