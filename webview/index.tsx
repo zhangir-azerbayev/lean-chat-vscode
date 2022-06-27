@@ -46,7 +46,13 @@ const openai = new OpenAIApi(new Configuration({ apiKey: LEAN_CHAT_CONFIG.apiKey
 
 function Main({ config }: { config: Config }) {
 
-    const [bubbles, pushBubble] = React.useReducer((state: Bubble[], action: Bubble) => [...state, action], [])
+    const [bubbles, pushBubble] = React.useReducer((state: Bubble[], action: Bubble | 'clear') => {
+        if (action === 'clear') {
+            return []
+        } else {
+            return [...state, action]
+        }
+    }, [])
     const [pending, setPending] = React.useState<boolean>(false)
     const [error, setError] = React.useState<string | undefined>(undefined)
     const [inputText, setInputText] = React.useState("")
@@ -100,7 +106,10 @@ function Main({ config }: { config: Config }) {
             <input type="text" value={inputText} onChange={e => setInputText(e.target.value)} />
             <input type="submit" value="Send" disabled={pending} />
         </form>
-        <button title="Try it out with demo text" onClick={() => setInputText(DEMO)}>Demo</button>
+        <div>
+            <button className="ma2" title="Try it out with demo text" onClick={() => setInputText(DEMO)}>Demo</button>
+            <button className="ma2" title="Clear the chat" onClick={() => pushBubble('clear')}>Clear</button>
+        </div>
     </div>
 }
 
@@ -109,7 +118,7 @@ function ShowCodeBubble(props: Bubble) {
     return <div>
         <code className="font-code" style={{ whiteSpace: 'break-spaces' }}>{text}</code>
         <div>
-            <button title="Paste to document"  onClick={() => post({ command: 'insert_text', text, insert_type: 'relative' })}>📋</button>
+            <button title="Paste to document" onClick={() => post({ command: 'insert_text', text, insert_type: 'relative' })}>📋</button>
         </div>
     </div>
 }
