@@ -25,9 +25,15 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('lean-chat-vscode.open', async function () {
         // The code you place here will be executed every time your command is executed
 
-        // [todo] add a modal dialogue here that tells the user that OpenAI needs us to
-        // sign you in.
-        const session = await authenticateUser()
+        let session = await vscode.authentication.getSession('github', ["user:email"], { createIfNone: false })
+        if (!session){
+            const result = await vscode.window.showInformationMessage(`In order to use lean-chat, OpenAI requires that we make you sign in.`, 'continue', 'no thanks')
+            if (result !== 'continue') {
+                vscode.window.showErrorMessage("lean-chat aborted")
+                return
+            }
+            session = await vscode.authentication.getSession('github', ["user:email"], { createIfNone: true })
+        }
 
         // [todo] don't make a new panel if one already exists.
         const panel = vscode.window.createWebviewPanel(
@@ -69,13 +75,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export async function deactivate() { }
-
-async function authenticateUser() {
-    const session = await vscode.authentication.getSession('github',
-        ["user:email"],
-        { createIfNone: true })
-    return session
-}
 
 function mkStylesheet() {
     const fontFamily =
