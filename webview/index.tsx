@@ -45,19 +45,17 @@ function Main({ config }: { config: Config }) {
         setPending(true)
         try {
             var prompt;
-            var response;
             if (bubbles.length!==0) {
                 const context = bubbles.map(x => x["plaintext"]).join("")
                 prompt = promptOfResponse(inputText, context)
-                response = await getCompletionOfPrompt(openai, prompt)
-
             } else {
                 prompt = promptOfNlStatement(inputText)
-                response = await getCompletionOfPrompt(openai, prompt)
             }
+            const user = LEAN_CHAT_CONFIG.session.account.id; 
+            var response = await getCompletionOfPrompt(openai, prompt, user)
 
             if (isSafeOfResponse(openai, response)) {
-                pushBubble({user: "codex", plaintext: response + " :=", type: 'code'})
+                pushBubble({user: "codex", plaintext: response + ":=", type: 'code'})
             } else {
                 const message = "Codex generated an unsafe output. Hit clear and try again"
                 pushBubble({user: "codex", plaintext: response, type: 'code'})
@@ -72,7 +70,7 @@ function Main({ config }: { config: Config }) {
     }
 
     return <div>
-        <h1 className="foo">Welcome to Lean chat!</h1>
+        <h1 className="foo">Welcome {LEAN_CHAT_CONFIG.session.account.label} to Lean chat!</h1>
 
         <MessageList>
             {bubbles.map((bubble, i) => <MessageBox key={i} dir={bubble.user === 'codex' ? "left" : "right"}>{bubble.type === 'code' ? <ShowCodeBubble {...bubble} /> : bubble.plaintext}</MessageBox>)}
