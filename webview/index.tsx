@@ -103,8 +103,8 @@ function Main({ config }: { config: Config }) {
         {error && <div className="red">{error}</div>}
 
         <form onSubmit={handleSubmit}>
-            <input type="text" value={inputText} onChange={e => setInputText(e.target.value)} />
-            <input type="submit" value="Send" disabled={pending} />
+            <textarea className="db" style={{width: '100%'}} value={inputText} onChange={e => setInputText(e.target.value)} />
+            <input className="db" type="submit" value="Send" disabled={pending} />
         </form>
         <div>
             <button className="ma2" title="Try it out with demo text" onClick={() => setInputText(DEMO)}>Demo</button>
