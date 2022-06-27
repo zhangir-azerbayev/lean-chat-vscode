@@ -18,6 +18,29 @@ export async function getCompletionOfPrompt(
     return response.data.choices[0].text
 }
 
+export async function isSafeOfResponse(
+    openai : OpenAIApi, 
+    response : string
+) {
+    const threshold = -0.355; 
+    const prompt = "<|endoftext|>${response}\n--\nLabel:"; 
+    let output = await openai.createCompletion({
+        model: "content-filter-alpha", 
+        prompt: prompt, 
+        max_tokens: 1, 
+        temperature: 0.0, 
+        top_p: 0.0, 
+        logprobs: 10, 
+    })
+    const token = output.data.choices[0].text
+    const logprob = output.data.choices[0].logprobs.top_logprobs[0]["2"]
+    if (output.data.choices[0].text==="2" && logprob < threshold) {
+        return true 
+    } else {
+        return false 
+    }
+}
+
 
 export async function runExample(key : string) {
     let openai = new OpenAIApi(new Configuration({apiKey : key}))

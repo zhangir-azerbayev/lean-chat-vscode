@@ -1,12 +1,12 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import './index.css'
-import { getCompletionOfPrompt, runExample } from './query_api';
+import { getCompletionOfPrompt, isSafeOfResponse, runExample } from './query_api';
 // import "react-chat-elements/dist/main.css";
 import './tachyons.css'
 import { MessageBox, MessageList } from './Chat'
 import { Configuration, OpenAIApi } from 'openai';
-import { promptOfNlStatement } from './prompting';
+import { promptOfNlStatement, promptOfResponse} from './prompting';
 
 interface Config {
     apiKey: string;
@@ -39,9 +39,24 @@ function Main({ config }: { config: Config }) {
         setError(undefined)
         setPending(true)
         try {
-            const prompt = promptOfNlStatement(inputText)
-            const response = await getCompletionOfPrompt(openai, prompt)
-            pushBubble({ user: "codex", plaintext: response, type: 'code' })
+            var prompt; 
+            var response; 
+            if (bubbles.length!==0) {
+                const context = bubbles.map(x => x["plaintext"]).join("")
+                prompt = promptOfResponse(inputText, context)
+                response = await getCompletionOfPrompt(openai, prompt)
+                
+            } else {
+                prompt = promptOfNlStatement(inputText)
+                response = await getCompletionOfPrompt(openai, prompt)
+            }
+
+            if (isSafeOfResponse(openai, response)) {
+                pushBubble({user: "codex", plaintext: response + " :=", type: 'code'})
+            } else {
+                const message = "Codex generated an unsafe output. Hit clear and try again"
+                pushBubble({user: "codex", plaintext: response, type: 'code'})
+            }
         }
         catch (e) {
             setError(e.message)
@@ -71,7 +86,7 @@ function Main({ config }: { config: Config }) {
 
 function ShowCodeBubble(props: Bubble) {
     return <div>
-        <code className="font-code" style={{ whiteSpace: 'break-spaces' }}>{props.plaintext}</code>
+        <code className="font-code" style={{ whiteSpace: 'break-spaces' }}>theorem{props.plaintext}</code>
     </div>
 }
 

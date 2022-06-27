@@ -20,12 +20,12 @@ export function promptOfNlStatement(nl, fewShotPrompt = FEW_SHOT_PROMPT) {
   return fewShotPrompt + "\n\nNatural language version: \"" + nl + "\" Translate the natural language version to a Lean mathlib version:\ntheorem";
 };
 
-export function promptOfResponse(suggestion, context) {
+export function promptOfResponse(suggestion, context, fewShotPrompt=FEW_SHOT_PROMPT) {
   let stripped_response = suggestion.trim();
   if (stripped_response.charAt(-1) != ".") {
     stripped_response += ".";
   };
-  return context + "\n" + stripped_response + " Try again:\ntheorem";
+  return FEW_SHOT_PROMPT + "\n" + context + "\n" + stripped_response + " Try again:\ntheorem";
 };
 
 const EXAMPLE_NL = "Let $a,b\\in G$, Show that $ab$ and $ba$ have the same order.";
