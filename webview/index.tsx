@@ -8,6 +8,7 @@ import { MessageBox, MessageList } from './Chat'
 import { Configuration, OpenAIApi } from 'openai';
 import { promptOfNlStatement, promptOfResponse } from './prompting';
 import { AuthenticationSession } from 'vscode';
+import { MathJax, MathJaxContext } from 'better-react-mathjax'
 
 interface Config {
     apiKey: string;
@@ -92,26 +93,72 @@ function Main({ config }: { config: Config }) {
         }
     }
 
-    return <div>
-        <h1 className="foo">Welcome {LEAN_CHAT_CONFIG.session.account.label} to Lean chat!</h1>
-
-        <MessageList>
-            {bubbles.map((bubble, i) => <MessageBox key={i} dir={bubble.user === 'codex' ? "left" : "right"}>{bubble.type === 'code' ? <ShowCodeBubble {...bubble} /> : bubble.plaintext}</MessageBox>)}
-            {pending && <MessageBox key={"..."} dir='left'><div className="loader">Loading...</div></MessageBox>}
-        </MessageList>
-
-        {error && <div className="red">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-            <textarea className="db" style={{width: '100%'}} value={inputText} onChange={e => setInputText(e.target.value)} />
-            <input className="db" type="submit" value="Send" disabled={pending} />
-        </form>
+    return <MathJaxContext onLoad={() => console.log("loaded mathjax")} onStartup={(m) =>console.log(m)}>
         <div>
-            <button className="ma2" title="Try it out with demo text" onClick={() => setInputText(DEMO)}>Demo</button>
-            <button className="ma2" title="Clear the chat" onClick={() => pushBubble('clear')}>Clear</button>
+            <h1 className="foo">Welcome {LEAN_CHAT_CONFIG.session.account.label} to Lean chat!</h1>
+
+            <MessageList>
+                {bubbles.map((bubble, i) =>
+                  <MessageBox key={i} dir={bubble.user === 'codex' ? "left" : "right"}>
+                    {bubble.type === 'code' ? <ShowCodeBubble {...bubble} /> : <ShowNlBubble {...bubble}/>}
+                </MessageBox>)}
+                {pending && <MessageBox key={"..."} dir='left'><div className="loader">Loading...</div></MessageBox>}
+            </MessageList>
+
+            {error && <div className="red">{error}</div>}
+
+            <form onSubmit={handleSubmit}>
+                <textarea className="db" style={{ width: '100%' }} value={inputText} onChange={e => setInputText(e.target.value)} />
+                <input className="db" type="submit" value="Send" disabled={pending} />
+            </form>
+            <div>
+                <button className="ma2" title="Try it out with demo text" onClick={() => setInputText(DEMO)}>Demo</button>
+                <button className="ma2" title="Clear the chat" onClick={() => pushBubble('clear')}>Clear</button>
+            </div>
         </div>
-    </div>
+    </MathJaxContext>
 }
+
+function wrapby(items: (any[]) | string, fence : string, out : (x:string) => any) {
+    if (typeof(items) === "string") {
+        items = [items]
+    }
+    function * core() {
+        for (const item of items) {
+            if (typeof(item) === "string") {
+                let xs = item.split(fence)
+                if (xs.length % 2 !== 1) {
+                    throw new Error(`Bad split on "${fence}": ${xs}`)
+                }
+                let text; let inner
+                while (xs.length >= 2) {
+                    [text, inner, ...xs] = xs
+                    yield text
+                    yield out(inner)
+                }
+                let [final] = xs
+                yield final
+            } else {
+                yield item
+            }
+        }
+    }
+    try {
+        return [...core()]
+    }
+    catch (e) {
+        return items
+    }
+}
+
+const  ShowNlBubble = React.memo(function(props: Bubble) {
+    let text : any = props.plaintext
+    text = wrapby(text, "$", tex => <MathJax inline={true}>{`\\(${tex}\\)`}</MathJax>)
+    text = wrapby(text, "`", x => <code className="font-code">{x}</code>)
+    return <div>
+        {text}
+    </div>
+})
 
 function ShowCodeBubble(props: Bubble) {
     let text = `theorem ${props.plaintext}`
