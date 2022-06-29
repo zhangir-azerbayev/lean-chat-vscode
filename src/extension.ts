@@ -27,7 +27,7 @@ export async function activate(context: vscode.ExtensionContext) {
         // The code you place here will be executed every time your command is executed
 
         let session = await vscode.authentication.getSession('github', ["user:email"], { createIfNone: false })
-        if (!session){
+        if (!session) {
             const result = await vscode.window.showInformationMessage(`In order to use lean-chat, OpenAI requires that we make you sign in.`, 'continue', 'no thanks')
             if (result !== 'continue') {
                 vscode.window.showErrorMessage("lean-chat aborted")
@@ -92,9 +92,13 @@ function mkStylesheet() {
     return fontCodeCSS;
 }
 
-async function handleWebviewMessage(message : InsertTextMessage) {
+async function handleWebviewMessage(message: FromWebviewMessage) {
     if (message.command === "insert_text") {
         return handleInsertText(message)
+    } else if (message.command === "copy_text") {
+        await vscode.env.clipboard.writeText(message.text);
+        await window.showInformationMessage(`Copied to clipboard: ${message.text}`);
+        return;
     }
 }
 
@@ -106,17 +110,24 @@ export interface InsertTextMessage {
     insert_type: 'absolute' | 'relative';
 }
 
+export interface CopyTextMessage {
+    command: 'copy_text';
+    text: string;
+}
+
+type FromWebviewMessage = CopyTextMessage | InsertTextMessage
+
 async function handleInsertText(message: InsertTextMessage) {
     let editor: vscode.TextEditor = null;
     if (message.loc) {
-       editor = window.visibleTextEditors.find(e => e.document.uri.toString() === message.loc?.uri.toString());
+        editor = window.visibleTextEditors.find(e => e.document.uri.toString() === message.loc?.uri.toString());
     } else {
         editor = window.activeTextEditor;
         if (!editor) { // sometimes activeTextEditor is null.
             editor = window.visibleTextEditors[0];
         }
     }
-    if (!editor) {return; }
+    if (!editor) { return; }
     const pos = message.loc ? this.positionOfLocation(message.loc).toPosition(editor.document) : editor.selection.active;
     const insert_type = message.insert_type ?? 'relative';
     if (insert_type === 'relative') {

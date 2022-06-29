@@ -23,10 +23,16 @@ declare const acquireVsCodeApi;
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const vscode = acquireVsCodeApi();
 
-export function post(message: InsertTextMessage): void { // send a message to the extension
+type FromWebviewMessage = InsertTextMessage | CopyTextMessage
+
+export function post(message: FromWebviewMessage): void { // send a message to the extension
     vscode.postMessage(message);
 }
 
+export interface CopyTextMessage {
+    command: 'copy_text';
+    text: string;
+}
 
 interface InsertTextMessage {
     command: 'insert_text';
@@ -114,6 +120,7 @@ function Main({ config }: { config: Config }) {
             <div>
                 <button className="ma2" title="Try it out with demo text" onClick={() => setInputText(DEMO)}>Demo</button>
                 <button className="ma2" title="Clear the chat" onClick={() => pushBubble('clear')}>Clear</button>
+                <button className="ma2" title="Paste the bubbles to buffer" onClick={() => post({command:'copy_text', text: JSON.stringify(bubbles)})}>Copy as JSON</button>
             </div>
         </div>
     </MathJaxContext>
