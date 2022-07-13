@@ -76,7 +76,7 @@ function Main({ config }: { config: Config }) {
         try {
             var prompt;
             if (bubbles.length !== 0) {
-                const context = bubbles.map(x => x["plaintext"]).join("")
+                const context = bubbles.map(x => x.plaintext).join("")
                 prompt = promptOfResponse(inputText, context)
             } else {
                 prompt = promptOfNlStatement(inputText)
@@ -84,7 +84,7 @@ function Main({ config }: { config: Config }) {
             const user = LEAN_CHAT_CONFIG.session.account.id;
             var response = await getCompletionOfPrompt(openai, prompt, user)
 
-            if (isSafeOfResponse(openai, response)) {
+            if (await isSafeOfResponse(openai, response)) {;
                 pushBubble({ user: "codex", plaintext: response + ":=", type: 'code' })
             } else {
                 const message = "Codex generated an unsafe output. Hit clear and try again"
