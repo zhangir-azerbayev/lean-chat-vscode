@@ -1,12 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import './index.css'
-import { getCompletionOfPrompt, isSafeOfResponse, runExample } from './query_api';
-// import "react-chat-elements/dist/main.css";
 import './tachyons.css'
 import { MessageBox, MessageList } from './Chat'
 import { Configuration, OpenAIApi } from 'openai';
-import { promptOfNlStatement, promptOfResponse } from './prompting';
 import { AuthenticationSession } from 'vscode';
 import { MathJax, MathJaxContext } from 'better-react-mathjax'
 
@@ -48,6 +45,8 @@ interface Bubble {
     plaintext: string;
 }
 
+const LEAN_CHAT_API_URL = "https://lean-chat-server.deno.dev/"
+
 const DEMO = "If $x$ is an element of infinite order in $G$, prove that the elements $x^n$, $n\\in\\mathbb{Z}$ are all distinct."
 const openai = new OpenAIApi(new Configuration({ apiKey: LEAN_CHAT_CONFIG.apiKey }))
 
@@ -74,22 +73,20 @@ function Main({ config }: { config: Config }) {
         setError(undefined)
         setPending(true)
         try {
-            var prompt;
-            if (bubbles.length !== 0) {
-                const context = bubbles.map(x => x["plaintext"]).join("")
-                prompt = promptOfResponse(inputText, context)
-            } else {
-                prompt = promptOfNlStatement(inputText)
-            }
-            const user = LEAN_CHAT_CONFIG.session.account.id;
-            var response = await getCompletionOfPrompt(openai, prompt, user)
+            const resp = await fetch(LEAN_CHAT_API_URL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({session : config.session, bubbles, inputText, kind: 'chat'}),
 
-            if (isSafeOfResponse(openai, response)) {
-                pushBubble({ user: "codex", plaintext: response + ":=", type: 'code' })
-            } else {
-                const message = "Codex generated an unsafe output. Hit clear and try again"
-                pushBubble({ user: "codex", plaintext: response, type: 'code' })
+            });
+            if (!resp.ok) {
+                throw new Error(await resp.text())
             }
+            const {newBubble, email} = await resp.json()
+            pushBubble(newBubble)
         }
         catch (e) {
             setError(e.message)
@@ -126,7 +123,7 @@ function Main({ config }: { config: Config }) {
     </MathJaxContext>
 }
 
-function wrapby(items: (any[]) | string, fence : string, out : (x:string) => any) {
+function wrapby(items: (any[]) | string, fence : string, out : (x:string, idx : number) => any) {
     if (typeof(items) === "string") {
         items = [items]
     }
@@ -141,7 +138,7 @@ function wrapby(items: (any[]) | string, fence : string, out : (x:string) => any
                 while (xs.length >= 2) {
                     [text, inner, ...xs] = xs
                     yield text
-                    yield out(inner)
+                    yield out(inner, xs.length)
                 }
                 let [final] = xs
                 yield final
@@ -158,10 +155,10 @@ function wrapby(items: (any[]) | string, fence : string, out : (x:string) => any
     }
 }
 
-const  ShowNlBubble = React.memo(function(props: Bubble) {
+const ShowNlBubble = React.memo(function(props: Bubble) {
     let text : any = props.plaintext
-    text = wrapby(text, "$", tex => <MathJax inline={true}>{`\\(${tex}\\)`}</MathJax>)
-    text = wrapby(text, "`", x => <code className="font-code">{x}</code>)
+    text = wrapby(text, "$", (tex, i) => <MathJax inline={true} key={`math-${i}`}>{`\\(${tex}\\)`}</MathJax>)
+    text = wrapby(text, "`", (x,i) => <code className="font-code" key={`code-${i}`}>{x}</code>)
     return <div>
         {text}
     </div>
