@@ -3,14 +3,13 @@ import * as ReactDOM from 'react-dom';
 import './index.css'
 import './tachyons.css'
 import { MessageBox, MessageList } from './Chat'
-import { Configuration, OpenAIApi } from 'openai';
 import { AuthenticationSession } from 'vscode';
 import { MathJax, MathJaxContext } from 'better-react-mathjax'
 
 interface Config {
-    apiKey: string;
     chatImage: string;
     session: AuthenticationSession;
+    LEAN_CHAT_API_URL: string
 }
 
 // this is injected in extension.ts
@@ -45,10 +44,7 @@ interface Bubble {
     plaintext: string;
 }
 
-const LEAN_CHAT_API_URL = "https://lean-chat-server.deno.dev/"
-
 const DEMO = "If $x$ is an element of infinite order in $G$, prove that the elements $x^n$, $n\\in\\mathbb{Z}$ are all distinct."
-const openai = new OpenAIApi(new Configuration({ apiKey: LEAN_CHAT_CONFIG.apiKey }))
 
 function Main({ config }: { config: Config }) {
 
@@ -63,6 +59,21 @@ function Main({ config }: { config: Config }) {
     const [error, setError] = React.useState<string | undefined>(undefined)
     const [inputText, setInputText] = React.useState("")
 
+    const [pingText, setPingText] = React.useState("")
+
+    async function handlePing(event) {
+        event.preventDefault()
+        const resp = await fetch(config.LEAN_CHAT_API_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({session : config.session, kind: 'ping'}),
+        })
+        setPingText(JSON.stringify(await resp.json()))
+    }
+
     async function handleSubmit(event) {
         event.preventDefault();
         if (pending) {
@@ -73,7 +84,7 @@ function Main({ config }: { config: Config }) {
         setError(undefined)
         setPending(true)
         try {
-            const resp = await fetch(LEAN_CHAT_API_URL, {
+            const resp = await fetch(config.LEAN_CHAT_API_URL, {
                 method: 'POST',
                 mode: 'cors',
                 headers: {
@@ -100,6 +111,8 @@ function Main({ config }: { config: Config }) {
         <div>
             <h1 className="foo">Welcome {LEAN_CHAT_CONFIG.session.account.label} to Lean chat!</h1>
 
+            <p>Please note that your requests will be sent to {LEAN_CHAT_CONFIG.LEAN_CHAT_API_URL} and logged.</p>
+
             <MessageList>
                 {bubbles.map((bubble, i) =>
                   <MessageBox key={i} dir={bubble.user === 'codex' ? "left" : "right"}>
@@ -118,6 +131,10 @@ function Main({ config }: { config: Config }) {
                 <button className="ma2" title="Try it out with demo text" onClick={() => setInputText(DEMO)}>Demo</button>
                 <button className="ma2" title="Clear the chat" onClick={() => pushBubble('clear')}>Clear</button>
                 <button className="ma2" title="Paste the bubbles to buffer" onClick={() => post({command:'copy_text', text: JSON.stringify(bubbles)})}>Copy as JSON</button>
+            </div>
+            <div>
+                <button className="ma2" onClick={handlePing}>ping server</button>
+                <div>{pingText}</div>
             </div>
         </div>
     </MathJaxContext>

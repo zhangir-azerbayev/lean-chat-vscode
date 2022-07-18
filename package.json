@@ -56,7 +56,6 @@
   "dependencies": {
     "better-react-mathjax": "^2.0.1",
     "mathjax": "^3.2.2",
-    "openai": "^3.0.0",
     "react": "^18.2.0"
   }
 }

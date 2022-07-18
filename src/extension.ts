@@ -14,12 +14,6 @@ export async function activate(context: vscode.ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, your extension "lean-chat-vscode" is now active!');
 
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY
-
-    if (OPENAI_API_KEY === undefined) {
-        vscode.window.showInformationMessage('You need to have an OPENAI_API_KEY environment variable!');
-    }
-
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
     // The commandId parameter must match the command field in package.json
@@ -45,6 +39,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
         const indexPath = panel.webview.asWebviewUri(vscode.Uri.file(join(context.extensionPath, 'media', 'index.js')))
         const codexImgPath = panel.webview.asWebviewUri(vscode.Uri.file(join(context.extensionPath, 'media', 'codex.jpeg')))
+        let apiUrl = "https://lean-chat-server.deno.dev/"
+        let apiUri = await vscode.env.asExternalUri(vscode.Uri.parse(apiUrl))
 
         const webviewContent = `
             <!DOCTYPE html>
@@ -55,9 +51,9 @@ export async function activate(context: vscode.ExtensionContext) {
                     <title>Lean Chat</title>
                     <script type="text/javascript">
                         const LEAN_CHAT_CONFIG = {
-                            apiKey: ${JSON.stringify(OPENAI_API_KEY)},
                             chatImage: ${JSON.stringify(codexImgPath.toString())},
                             session: ${JSON.stringify(session)},
+                            LEAN_CHAT_API_URL: ${JSON.stringify(apiUri.toString())},
                         };
                     </script>
                     <style>${mkStylesheet()}</style>
