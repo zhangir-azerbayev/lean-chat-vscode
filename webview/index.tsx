@@ -1,20 +1,13 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import './index.css'
-import { getCompletionOfPrompt, isSafeOfResponse, runExample } from './query_api';
+import { getCompletionOfPrompt, isSafeOfResponse, Config, runExample } from './query_api';
 // import "react-chat-elements/dist/main.css";
 import './tachyons.css'
 import { MessageBox, MessageList } from './Chat'
 import { Configuration, OpenAIApi } from 'openai';
 import { promptOfNlStatement, promptOfResponse } from './prompting';
-import { AuthenticationSession } from 'vscode';
 import { MathJax, MathJaxContext } from 'better-react-mathjax'
-
-interface Config {
-    apiKey: string;
-    chatImage: string;
-    session: AuthenticationSession;
-}
 
 // this is injected in extension.ts
 declare const LEAN_CHAT_CONFIG: Config
@@ -84,10 +77,10 @@ function Main({ config }: { config: Config }) {
             const user = LEAN_CHAT_CONFIG.session.account.id;
             var response = await getCompletionOfPrompt(openai, prompt, user)
 
-            if (await isSafeOfResponse(openai, response)) {;
+            if (await isSafeOfResponse(LEAN_CHAT_CONFIG, response)) {;
                 pushBubble({ user: "codex", plaintext: response + ":=", type: 'code' })
             } else {
-                const message = "Codex generated an unsafe output. Hit clear and try again"
+                const message = "Codex generated an output that violates OpenAI's content policy. Hit clear and try again"
                 pushBubble({ user: "codex", plaintext: response, type: 'code' })
             }
         }
