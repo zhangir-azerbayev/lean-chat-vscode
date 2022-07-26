@@ -63,6 +63,7 @@ function Main({ config }: { config: Config }) {
 
     async function handlePing(event) {
         event.preventDefault()
+        setPingText(`pinging ${config.LEAN_CHAT_API_URL}...`)
         const resp = await fetch(config.LEAN_CHAT_API_URL, {
             method: 'POST',
             mode: 'cors',
@@ -109,7 +110,9 @@ function Main({ config }: { config: Config }) {
 
     return <MathJaxContext onLoad={() => console.log("loaded mathjax")} onStartup={(m) =>console.log(m)}>
         <div>
-            <h1 className="foo">Welcome {LEAN_CHAT_CONFIG.session.account.label} to Lean chat!</h1>
+            <h2>Welcome {LEAN_CHAT_CONFIG.session.account.label} to Lean chat!</h2>
+
+            <p>Type a natural language definition in to the text box below (latex is supported) and click 'Send' to produce a formal theorem statement.</p>
 
             <p>Please note that your requests will be sent to {LEAN_CHAT_CONFIG.LEAN_CHAT_API_URL} and logged.</p>
 
@@ -124,8 +127,13 @@ function Main({ config }: { config: Config }) {
             {error && <div className="red">{error}</div>}
 
             <form onSubmit={handleSubmit}>
-                <textarea className="db" style={{ width: '100%' }} value={inputText} onChange={e => setInputText(e.target.value)} />
-                <input className="db" type="submit" value="Send" disabled={pending} />
+                <textarea
+                  className="db border-box b--black-20 pa2 br2 ma2"
+                  style={{ width: '100%' }}
+                  value={inputText}
+                  placeholder={`Type a natural language theorem statement here. E.g: ${DEMO}`}
+                  onChange={e => setInputText(e.target.value)} />
+                <input className="db ma2" type="submit" value="Send" disabled={pending} />
             </form>
             <div>
                 <button className="ma2" title="Try it out with demo text" onClick={() => setInputText(DEMO)}>Demo</button>
