@@ -216,8 +216,8 @@ function ShowCodeBubble(props: Bubble) {
         <code className="font-code" style={{ whiteSpace: 'break-spaces' }}>{text}</code>
         <div className="mv2">
             <a href="#" className="link black hover-bg-light-blue mh2" title="Paste to document" onClick={() => post({ command: 'insert_text', text, insert_type: 'relative' })}>📋</a>
-            {!response && props.id && <a href="#" className="link black hover-bg-light-blue mh2" title="This is a good suggestion" onClick={() => handleFeedback(1)} disabled={!!response}>👍</a>}
-            {!response && props.id && <a href="#" className="link black hover-bg-light-blue mh2" title="This is a bad suggestion" onClick={() => handleFeedback(-1)} disabled={!!response}>👎</a>}
+            {!response && props.id && <a href="#" className="link black hover-bg-light-blue mh2" title="This is a good suggestion" onClick={() => handleFeedback(1)}>👍</a>}
+            {!response && props.id && <a href="#" className="link black hover-bg-light-blue mh2" title="This is a bad suggestion" onClick={() => handleFeedback(-1)}>👎</a>}
             {response && (
                 response === 'loading'
                     ? <span className="mh2">Loading...</span>
