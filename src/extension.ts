@@ -54,6 +54,7 @@ export async function activate(context: vscode.ExtensionContext) {
                             chatImage: ${JSON.stringify(codexImgPath.toString())},
                             session: ${JSON.stringify(session)},
                             LEAN_CHAT_API_URL: ${JSON.stringify(apiUri.toString())},
+                            DEBUG_MODE: ${JSON.stringify(isDebugMode())}
                         };
                     </script>
                     <style>${mkStylesheet()}</style>
@@ -112,6 +113,8 @@ export interface CopyTextMessage {
 }
 
 type FromWebviewMessage = CopyTextMessage | InsertTextMessage
+
+const isDebugMode = () => process.env.VSCODE_DEBUG_MODE === "debug";
 
 async function handleInsertText(message: InsertTextMessage) {
     let editor: vscode.TextEditor = null;

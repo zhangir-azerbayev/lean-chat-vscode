@@ -10,7 +10,10 @@
             "args": ["--extensionDevelopmentPath=${workspaceRoot}" ],
             "sourceMaps": true,
             "outFiles": [ "${workspaceRoot}/out/src/**/*.js" ],
-            "preLaunchTask": "watch"
+            "preLaunchTask": "watch",
+            "env": {
+                "VSCODE_DEBUG_MODE": "debug"
+            }
         },
         {
             "name": "Launch Tests",

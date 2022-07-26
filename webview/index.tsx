@@ -9,7 +9,8 @@ import { MathJax, MathJaxContext } from 'better-react-mathjax'
 interface Config {
     chatImage: string;
     session: AuthenticationSession;
-    LEAN_CHAT_API_URL: string
+    LEAN_CHAT_API_URL: string;
+    DEBUG_MODE: boolean;
 }
 
 // this is injected in extension.ts
@@ -53,7 +54,7 @@ function Main({ config }: { config: Config }) {
         if (action === 'clear_all') {
             return []
         } else if (action === 'clear_one') {
-            return state.slice(0,-1)
+            return state.slice(0, -1)
         } else {
             return [...state, action]
         }
@@ -132,9 +133,12 @@ function Main({ config }: { config: Config }) {
             <form onSubmit={handleSubmit}>
                 <textarea
                     className="db border-box b--black-20 pa2 br2 ma2"
-                    style={{ width: '100%' }}
+                    style={{ width: '100%', height: `5em` }}
                     value={inputText}
-                    placeholder={`Type a natural language theorem statement here. E.g: ${DEMO}`}
+                    placeholder={
+                        bubbles.length == 0
+                            ? `Type a natural language theorem statement here. E.g: ${DEMO}`
+                            : `If the returned formal statement is wrong, respond with instructions about what to correct, e.g: "Add a hypothesis that $n>1$"`}
                     onChange={e => setInputText(e.target.value)} />
                 <input className="db ma2" type="submit" value="Send" disabled={pending} />
             </form>
@@ -143,10 +147,11 @@ function Main({ config }: { config: Config }) {
                 <button className="ma2" title="Clear one bubble" onClick={() => pushBubble('clear_one')}>Clear</button>
                 <button className="ma2" title="Clear the chat" onClick={() => pushBubble('clear_all')}>Clear all</button>
             </div>
-            <div>
-                <button className="ma2" onClick={handlePing}>ping server</button>
-                <div>{pingText}</div>
-            </div>
+            {config.DEBUG_MODE &&
+                <div>
+                    <button className="ma2" onClick={handlePing}>ping server</button>
+                    <div>{pingText}</div>
+                </div>}
         </div>
     </MathJaxContext>
 }
