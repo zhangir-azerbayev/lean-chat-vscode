@@ -49,9 +49,11 @@ const DEMO = "If $x$ is an element of infinite order in $G$, prove that the elem
 
 function Main({ config }: { config: Config }) {
 
-    const [bubbles, pushBubble] = React.useReducer((state: Bubble[], action: Bubble | 'clear') => {
-        if (action === 'clear') {
+    const [bubbles, pushBubble] = React.useReducer((state: Bubble[], action: Bubble | 'clear_one' | 'clear_all') => {
+        if (action === 'clear_all') {
             return []
+        } else if (action === 'clear_one') {
+            return state.slice(0,-1)
         } else {
             return [...state, action]
         }
@@ -113,9 +115,9 @@ function Main({ config }: { config: Config }) {
         <div>
             <h2>Welcome {LEAN_CHAT_CONFIG.session.account.label} to Lean chat!</h2>
 
-            <p>Type a natural language definition in to the text box below (latex is supported) and click 'Send' to produce a formal theorem statement.</p>
+            <p>Type a natural language theorem in LaTeX and click 'Send' to produce a formal theorem statement. If the formal statement is wrong, you can respond with instructions about what to correct.</p>
 
-            <p>Please note that your requests will be sent to {LEAN_CHAT_CONFIG.LEAN_CHAT_API_URL} and logged.</p>
+            <p style={{ color: 'grey' }}>Please note that your requests will be sent to {LEAN_CHAT_CONFIG.LEAN_CHAT_API_URL} and saved to improve future translations.</p>
 
             <MessageList>
                 {bubbles.map((bubble, i) =>
@@ -138,8 +140,8 @@ function Main({ config }: { config: Config }) {
             </form>
             <div>
                 <button className="ma2" title="Try it out with demo text" onClick={() => setInputText(DEMO)}>Demo</button>
-                <button className="ma2" title="Clear the chat" onClick={() => pushBubble('clear')}>Clear</button>
-                <button className="ma2" title="Paste the bubbles to buffer" onClick={() => post({ command: 'copy_text', text: JSON.stringify(bubbles) })}>Copy as JSON</button>
+                <button className="ma2" title="Clear one bubble" onClick={() => pushBubble('clear_one')}>Clear</button>
+                <button className="ma2" title="Clear the chat" onClick={() => pushBubble('clear_all')}>Clear all</button>
             </div>
             <div>
                 <button className="ma2" onClick={handlePing}>ping server</button>
