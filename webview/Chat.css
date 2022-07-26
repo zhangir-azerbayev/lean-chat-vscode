@@ -4,6 +4,14 @@
     --bubble-bg-color: #CDECFF;
 }
 
+body.vscode-light {
+    --bubble-bg-color: #CDECFF;
+}
+
+body.vscode-dark {
+    --bubble-bg-color: #12486a;
+}
+
 .rce-container-mbox {
     flex-direction: column;
     display: block;

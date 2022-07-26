@@ -42,6 +42,7 @@ interface Bubble {
     user: 'codex' | 'me';
     type: 'nl' | 'code';
     plaintext: string;
+    id?: string;
 }
 
 const DEMO = "If $x$ is an element of infinite order in $G$, prove that the elements $x^n$, $n\\in\\mathbb{Z}$ are all distinct."
@@ -70,7 +71,7 @@ function Main({ config }: { config: Config }) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({session : config.session, kind: 'ping'}),
+            body: JSON.stringify({ session: config.session, kind: 'ping' }),
         })
         setPingText(JSON.stringify(await resp.json()))
     }
@@ -91,13 +92,13 @@ function Main({ config }: { config: Config }) {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({session : config.session, bubbles, inputText, kind: 'chat'}),
+                body: JSON.stringify({ session: config.session, bubbles, inputText, kind: 'chat' }),
 
             });
             if (!resp.ok) {
                 throw new Error(await resp.text())
             }
-            const {newBubble, email} = await resp.json()
+            const { newBubble, email } = await resp.json()
             pushBubble(newBubble)
         }
         catch (e) {
@@ -108,7 +109,7 @@ function Main({ config }: { config: Config }) {
         }
     }
 
-    return <MathJaxContext onLoad={() => console.log("loaded mathjax")} onStartup={(m) =>console.log(m)}>
+    return <MathJaxContext onLoad={() => console.log("loaded mathjax")} onStartup={(m) => console.log(m)}>
         <div>
             <h2>Welcome {LEAN_CHAT_CONFIG.session.account.label} to Lean chat!</h2>
 
@@ -118,9 +119,9 @@ function Main({ config }: { config: Config }) {
 
             <MessageList>
                 {bubbles.map((bubble, i) =>
-                  <MessageBox key={i} dir={bubble.user === 'codex' ? "left" : "right"}>
-                    {bubble.type === 'code' ? <ShowCodeBubble {...bubble} /> : <ShowNlBubble {...bubble}/>}
-                </MessageBox>)}
+                    <MessageBox key={i} dir={bubble.user === 'codex' ? "left" : "right"}>
+                        {bubble.type === 'code' ? <ShowCodeBubble {...bubble} /> : <ShowNlBubble {...bubble} />}
+                    </MessageBox>)}
                 {pending && <MessageBox key={"..."} dir='left'><div className="loader">Loading...</div></MessageBox>}
             </MessageList>
 
@@ -128,17 +129,17 @@ function Main({ config }: { config: Config }) {
 
             <form onSubmit={handleSubmit}>
                 <textarea
-                  className="db border-box b--black-20 pa2 br2 ma2"
-                  style={{ width: '100%' }}
-                  value={inputText}
-                  placeholder={`Type a natural language theorem statement here. E.g: ${DEMO}`}
-                  onChange={e => setInputText(e.target.value)} />
+                    className="db border-box b--black-20 pa2 br2 ma2"
+                    style={{ width: '100%' }}
+                    value={inputText}
+                    placeholder={`Type a natural language theorem statement here. E.g: ${DEMO}`}
+                    onChange={e => setInputText(e.target.value)} />
                 <input className="db ma2" type="submit" value="Send" disabled={pending} />
             </form>
             <div>
                 <button className="ma2" title="Try it out with demo text" onClick={() => setInputText(DEMO)}>Demo</button>
                 <button className="ma2" title="Clear the chat" onClick={() => pushBubble('clear')}>Clear</button>
-                <button className="ma2" title="Paste the bubbles to buffer" onClick={() => post({command:'copy_text', text: JSON.stringify(bubbles)})}>Copy as JSON</button>
+                <button className="ma2" title="Paste the bubbles to buffer" onClick={() => post({ command: 'copy_text', text: JSON.stringify(bubbles) })}>Copy as JSON</button>
             </div>
             <div>
                 <button className="ma2" onClick={handlePing}>ping server</button>
@@ -148,13 +149,13 @@ function Main({ config }: { config: Config }) {
     </MathJaxContext>
 }
 
-function wrapby(items: (any[]) | string, fence : string, out : (x:string, idx : number) => any) {
-    if (typeof(items) === "string") {
+function wrapby(items: (any[]) | string, fence: string, out: (x: string, idx: number) => any) {
+    if (typeof (items) === "string") {
         items = [items]
     }
-    function * core() {
+    function* core() {
         for (const item of items) {
-            if (typeof(item) === "string") {
+            if (typeof (item) === "string") {
                 let xs = item.split(fence)
                 if (xs.length % 2 !== 1) {
                     throw new Error(`Bad split on "${fence}": ${xs}`)
@@ -180,21 +181,47 @@ function wrapby(items: (any[]) | string, fence : string, out : (x:string, idx : 
     }
 }
 
-const ShowNlBubble = React.memo(function(props: Bubble) {
-    let text : any = props.plaintext
+const ShowNlBubble = React.memo(function (props: Bubble) {
+    let text: any = props.plaintext
     text = wrapby(text, "$", (tex, i) => <MathJax inline={true} key={`math-${i}`}>{`\\(${tex}\\)`}</MathJax>)
-    text = wrapby(text, "`", (x,i) => <code className="font-code" key={`code-${i}`}>{x}</code>)
+    text = wrapby(text, "`", (x, i) => <code className="font-code" key={`code-${i}`}>{x}</code>)
     return <div>
         {text}
     </div>
 })
 
 function ShowCodeBubble(props: Bubble) {
+    let config = LEAN_CHAT_CONFIG
     let text = `theorem ${props.plaintext}`
+    const [response, setResp] = React.useState(undefined)
+    const handleFeedback = async (val: number) => {
+        setResp('loading')
+        const resp = await fetch(config.LEAN_CHAT_API_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ session: config.session, val, responseId: props.id, kind: 'rating', }),
+
+        });
+        if (!resp.ok) {
+            const msg = resp.text()
+            setResp(`errored: ${msg}`)
+        }
+        const { message } = await resp.json()
+        setResp(message)
+    }
     return <div>
         <code className="font-code" style={{ whiteSpace: 'break-spaces' }}>{text}</code>
-        <div>
-            <button title="Paste to document" onClick={() => post({ command: 'insert_text', text, insert_type: 'relative' })}>📋</button>
+        <div className="mv2">
+            <a href="#" className="link black hover-bg-light-blue mh2" title="Paste to document" onClick={() => post({ command: 'insert_text', text, insert_type: 'relative' })}>📋</a>
+            {!response && props.id && <a href="#" className="link black hover-bg-light-blue mh2" title="This is a good suggestion" onClick={() => handleFeedback(1)} disabled={!!response}>👍</a>}
+            {!response && props.id && <a href="#" className="link black hover-bg-light-blue mh2" title="This is a bad suggestion" onClick={() => handleFeedback(-1)} disabled={!!response}>👎</a>}
+            {response && (
+                response === 'loading'
+                    ? <span className="mh2">Loading...</span>
+                    : <span className="mh2">{response}</span>)}
         </div>
     </div>
 }
