@@ -1,5 +1,6 @@
 {
   "name": "lean-chat-vscode",
+  "publisher": "hoskinson-ml",
   "displayName": "Lean Chat",
   "description": "Lean to OpenAI Codex chat app.",
   "version": "0.0.1",
@@ -9,8 +10,11 @@
   "categories": [
     "Other"
   ],
-  "icon": "images/robot.png", 
-  "repository": {"type": "git", "url": "https://github.com/zhangir-azerbayev/lean-chat-vscode.git"},
+  "icon": "images/robot.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zhangir-azerbayev/lean-chat-vscode.git"
+  },
   "activationEvents": [
     "onCommand:lean-chat-vscode.open"
   ],
@@ -51,7 +55,7 @@
     "ts-loader": "^9.2.2",
     "typescript": "^4.7.2",
     "url-loader": "^4.1.1",
-    "vsce": "^2.9.2",
+    "vsce": "^2.10.0",
     "webpack": "^5.38.1",
     "webpack-cli": "^4.7.0"
   },
