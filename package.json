@@ -9,6 +9,8 @@
   "categories": [
     "Other"
   ],
+  "icon": "images/robot.png", 
+  "repository": {"type": "git", "url": "https://github.com/zhangir-azerbayev/lean-chat-vscode.git"},
   "activationEvents": [
     "onCommand:lean-chat-vscode.open"
   ],
